@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lucasperna.dscatalog.dto.ProductDTO;
 import com.lucasperna.dscatalog.tests.Factory;
+import com.lucasperna.dscatalog.tests.TokenUtil;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -30,12 +31,19 @@ public class ProductResourceIT {
 	@Autowired
 	private ObjectMapper objectMapper;
 	
+	@Autowired
+	private TokenUtil tokenUtil;
+	
 	private Long testId;
 	private Long failId;
 	private Long countTotalProducts;
+	private String username;
+	private String password;
 	
 	@BeforeEach
 	void setUp() throws Exception {
+		username = "maria@gmail.com";
+		password = "123456";
 		testId = 1L;
 		failId = 1000L;
 		countTotalProducts = 25L;
@@ -59,6 +67,8 @@ public class ProductResourceIT {
 	@Test
 	public void updateShouldReturnProductDtoWhenIdExist() throws Exception{
 		
+		String accessToken = tokenUtil.obtainAccessToken(mockMvc, username, password);
+		
 		ProductDTO productDto = Factory.createProductDTO();
 		String jsonBody = objectMapper.writeValueAsString(productDto);
 		
@@ -66,6 +76,7 @@ public class ProductResourceIT {
 		String expectedDescription = productDto.getDescription();
 		
 		ResultActions result = mockMvc.perform(put("/products/{id}", testId)
+				.header("Authorization", "Bearer " + accessToken)
 				.content(jsonBody)
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON));
@@ -78,10 +89,13 @@ public class ProductResourceIT {
 	@Test
 	public void updateShouldReturnNotFoundWhenIdDoesNotExist() throws Exception{
 		
+		String accessToken = tokenUtil.obtainAccessToken(mockMvc, username, password);
+		
 		ProductDTO productDto = Factory.createProductDTO();
 		String jsonBody = objectMapper.writeValueAsString(productDto);
 		
 		ResultActions result = mockMvc.perform(put("/products/{id}", failId)
+				.header("Authorization", "Bearer " + accessToken)
 				.content(jsonBody)
 				.contentType(MediaType.APPLICATION_JSON)
 				.accept(MediaType.APPLICATION_JSON));
